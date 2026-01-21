@@ -15,6 +15,10 @@ DETECTION_MIN = 0.5 # The minimum confidence score for the pose/hand detection t
 PRESENCE_MIN = 0.5 # The minimum confidence score of pose/hand presence score in the pose landmark detection.
 TRACKING_MIN = 0.5 # The minimum confidence score for the pose/hand tracking to be considered successful.
 
+# Set to True to keep enabled, False to disable
+ENABLE_HAND = True 
+ENABLE_POSE = False
+
 hand_model_path = "hand_landmarker.task" # path to hand model
 pose_model_path = "pose_landmarker_lite.task" # path to pose model
 
@@ -117,28 +121,30 @@ def main():
     fps = 0.0
     
     while True:
-        frame_start = time.time()
         
         ret, frame = cap.read() # init camera
         if not ret:
             break
 
         h, w = frame.shape[:2]
+        
+        frame = cv2.flip(frame, 1)
+
 
         # Prepare image for mediapipe processing
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
         timestamp_ms = int((time.time() - prev_time) * 1000)
 
-        # Create results of landmark detection
-        handResult = handLandmarker.detect_for_video(mp_image, timestamp_ms)
-        poseResult = poseLandmarker.detect_for_video(mp_image, timestamp_ms)
-        
-        # Draw new frames
-        frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
+        # Hand logic
+        if ENABLE_HAND:
+            handResult = handLandmarker.detect_for_video(mp_image, timestamp_ms)
+            frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
                               HAND_MAIN_COLOR, HAND_ACCENT_COLOR,
                               HAND_LINE_GROUPS, is_pose=False)
-        frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
+        if ENABLE_POSE:
+            poseResult = poseLandmarker.detect_for_video(mp_image, timestamp_ms)
+            frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
                               POSE_MAIN_COLOR, POSE_ACCENT_COLOR,
                               POSE_LINE_GROUPS, is_pose=True)
 
