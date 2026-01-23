@@ -18,6 +18,7 @@ TRACKING_MIN = 0.5 # The minimum confidence score for the pose/hand tracking to 
 # Set to True to keep enabled, False to disable
 ENABLE_HAND = True 
 ENABLE_POSE = False
+ENABLE_VISUALIZATION = False
 
 hand_model_path = "models/hand_landmarker.task" # path to hand model
 pose_model_path = "models/pose_landmarker_lite.task" # path to pose model
@@ -83,6 +84,8 @@ HAND_ACCENT_COLOR = (0,0,255)
 POSE_MAIN_COLOR = (255,0,0)
 POSE_ACCENT_COLOR = (0,0,255)
 
+prev_time = time.time()
+
 ### CODE START ###
 
 def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups, is_pose=False):
@@ -92,6 +95,7 @@ def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups,
     for lm_list in landmarks:
         # Position
         positions = np.array([(int(lm.x*w), int(lm.y * h)) for lm in lm_list])
+        
         
         # Draw all circles
         for i, (cx, cy) in enumerate(positions):
@@ -115,7 +119,6 @@ def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups,
 
 def main():
     # Start FPS calculations
-    prev_time = time.time()
     frame_count = 0
     fps_update_time = time.time()
     fps = 0.0
@@ -139,12 +142,14 @@ def main():
         # Hand logic
         if ENABLE_HAND:
             handResult = handLandmarker.detect_for_video(mp_image, timestamp_ms)
-            frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
+            if ENABLE_VISUALIZATION:
+                frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
                               HAND_MAIN_COLOR, HAND_ACCENT_COLOR,
                               HAND_LINE_GROUPS, is_pose=False)
         if ENABLE_POSE:
             poseResult = poseLandmarker.detect_for_video(mp_image, timestamp_ms)
-            frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
+            if ENABLE_VISUALIZATION: 
+                frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
                               POSE_MAIN_COLOR, POSE_ACCENT_COLOR,
                               POSE_LINE_GROUPS, is_pose=True)
 
@@ -173,9 +178,49 @@ def main():
     handLandmarker.close()
     poseLandmarker.close()
 
+def generateVisuals():
+    
+    frame = returnFrame()
+    
+    h, w = frame.shape[:2]
 
+    # Prepare image for mediapipe processing
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+    timestamp_ms = int((time.time() - prev_time) * 1000)
+    
+    handPositions = None
+    posePositions = None
+    
+    if ENABLE_HAND:
+        handResult = handLandmarker.detect_for_video(mp_image, timestamp_ms)
+        for lm_list in handResult.hand_landmarks:
+            handPositions = np.array([(int(lm.x*w), int(lm.y * h)) for lm in lm_list])
+        if ENABLE_VISUALIZATION:
+            frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
+                              HAND_MAIN_COLOR, HAND_ACCENT_COLOR,
+                              HAND_LINE_GROUPS, is_pose=False)
+        
+    if ENABLE_POSE:
+        poseResult = poseLandmarker.detect_for_video(mp_image, timestamp_ms)
+        for lm_list in poseResult.pose_landmarks:
+            posePositions = np.array([(int(lm.x*w), int(lm.y * h)) for lm in lm_list])
+            
+        if ENABLE_VISUALIZATION:
+            frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
+                              POSE_MAIN_COLOR, POSE_ACCENT_COLOR,
+                              POSE_LINE_GROUPS, is_pose=True)
+            
+    return frame, handPositions, posePositions
 
-
+def returnFrame():
+    ret, frame = cap.read() # init camera
+    if not ret:
+        return
+        
+    frame = cv2.flip(frame, 1)
+    
+    return frame
 
 if __name__ == "__main__":
     main()
