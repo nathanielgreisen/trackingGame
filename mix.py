@@ -19,8 +19,8 @@ TRACKING_MIN = 0.5 # The minimum confidence score for the pose/hand tracking to 
 ENABLE_HAND = True 
 ENABLE_POSE = False
 
-hand_model_path = "models/hand_landmarker.task" # path to hand model
-pose_model_path = "models/pose_landmarker_lite.task" # path to pose model
+hand_model_path = "hand_landmarker.task" # path to hand model
+pose_model_path = "pose_landmarker_lite.task" # path to pose model
 
 ### INITIALIZATIONS ###
 

@@ -12,7 +12,7 @@ import cv2
 # if __name__ == "__main__":
 #     main()
 
-model = YOLO("best.pt")
+model = YOLO("models/last.pt")
 
 results = model.predict(source="0", show=True, stream=True)
 
