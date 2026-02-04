@@ -17,11 +17,13 @@ TRACKING_MIN = 0.5 # The minimum confidence score for the pose/hand tracking to 
 
 # Set to True to keep enabled, False to disable
 ENABLE_HAND = True 
-ENABLE_POSE = False
-ENABLE_VISUALIZATION = False
+ENABLE_POSE = True
+ENABLE_FACE = True
+ENABLE_VISUALIZATION = True
 
 hand_model_path = "models/hand_landmarker.task" # path to hand model
 pose_model_path = "models/pose_landmarker_lite.task" # path to pose model
+face_model_path = "models/face_landmarker.task" # path to face model
 
 ### INITIALIZATIONS ###
 
@@ -32,6 +34,8 @@ HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
 PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
+FaceLandmarker = mp.tasks.vision.FaceLandmarker
+FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
 
 # Hand Options
 handOptions = HandLandmarkerOptions(
@@ -53,15 +57,27 @@ poseOptions = PoseLandmarkerOptions(
     min_tracking_confidence=TRACKING_MIN,
 )
 
+# Face Options
+faceOptions = FaceLandmarkerOptions(
+    base_options=BaseOptions(model_asset_path=face_model_path),
+    running_mode=VisionRunningMode.VIDEO,
+    num_faces=NUM_PEOPLE,
+    min_face_detection_confidence=DETECTION_MIN,
+    min_face_presence_confidence=PRESENCE_MIN,
+    min_tracking_confidence=TRACKING_MIN,
+)
+
 # Create landmarkers
 handLandmarker = HandLandmarker.create_from_options(handOptions)
 poseLandmarker = PoseLandmarker.create_from_options(poseOptions)
+FaceLandmarker = FaceLandmarker.create_from_options(faceOptions)
 
 # Get camera
 cap = cv2.VideoCapture(0)
 
 # Hand and Pose presets
-HAND_LINE_GROUPS = np.array([[0,1,2,3,4], # Thumb
+HAND_LINE_GROUPS = np.array([
+              [0,1,2,3,4], # Thumb
               [0,5,6,7,8], # Index finger
               [0,9,10,11,12], # Middle Finger
               [0,13,14,15,16], # Ring Finger
@@ -79,10 +95,16 @@ POSE_LINE_GROUPS = np.array([
             (24, 26), (26, 28), # right leg
             ], dtype=np.int32)
 
+FACE_LINE_GROUPS = np.array([
+            [0,1,2,3,4] # temp
+], dtype=object)
+
 HAND_MAIN_COLOR = (0,255,0)
 HAND_ACCENT_COLOR = (0,0,255)
 POSE_MAIN_COLOR = (255,0,0)
 POSE_ACCENT_COLOR = (0,0,255)
+FACE_MAIN_COLOR = (128,128,0)
+FACE_ACCENT_COLOR = (0,128,128)
 
 prev_time = time.time()
 
@@ -152,6 +174,12 @@ def main():
                 frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
                               POSE_MAIN_COLOR, POSE_ACCENT_COLOR,
                               POSE_LINE_GROUPS, is_pose=True)
+        if ENABLE_FACE:
+            faceResult = FaceLandmarker.detect_for_video(mp_image, timestamp_ms)
+            if ENABLE_VISUALIZATION:
+                frame = drawLandmarks(faceResult.face_landmarks, frame, h, w,
+                              FACE_MAIN_COLOR, FACE_ACCENT_COLOR,
+                              FACE_LINE_GROUPS, is_pose=False)
 
         # FPS calculation and display
         frame_count += 1
