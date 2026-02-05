@@ -110,7 +110,7 @@ prev_time = time.time()
 
 ### CODE START ###
 
-def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups, is_pose=False):
+def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups, type):
     if not landmarks:
         return frame
     
@@ -126,12 +126,12 @@ def drawLandmarks(landmarks, frame, h, w, main_color, accent_color, line_groups,
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, main_color, 1)
         
         # Draw pose lines
-        if is_pose:
+        if type == "pose":
             for start_idx, end_idx in line_groups:
                 cv2.line(frame, tuple(positions[start_idx]),
                          tuple(positions[end_idx]), accent_color, 1)
         # Draw hand lines
-        else:
+        elif type == "hand" or "":
             for section in line_groups:
                 for j in range(len(section) - 1):
                     start_pt = tuple(positions[section[j]])
@@ -167,19 +167,19 @@ def main():
             if ENABLE_VISUALIZATION:
                 frame = drawLandmarks(handResult.hand_landmarks, frame, h, w, 
                               HAND_MAIN_COLOR, HAND_ACCENT_COLOR,
-                              HAND_LINE_GROUPS, is_pose=False)
+                              HAND_LINE_GROUPS, "hand")
         if ENABLE_POSE:
             poseResult = poseLandmarker.detect_for_video(mp_image, timestamp_ms)
             if ENABLE_VISUALIZATION: 
                 frame = drawLandmarks(poseResult.pose_landmarks, frame, h, w, 
                               POSE_MAIN_COLOR, POSE_ACCENT_COLOR,
-                              POSE_LINE_GROUPS, is_pose=True)
+                              POSE_LINE_GROUPS, "pose")
         if ENABLE_FACE:
             faceResult = FaceLandmarker.detect_for_video(mp_image, timestamp_ms)
             if ENABLE_VISUALIZATION:
                 frame = drawLandmarks(faceResult.face_landmarks, frame, h, w,
                               FACE_MAIN_COLOR, FACE_ACCENT_COLOR,
-                              FACE_LINE_GROUPS, is_pose=False)
+                              FACE_LINE_GROUPS, "face")
 
         # FPS calculation and display
         frame_count += 1
