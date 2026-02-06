@@ -14,9 +14,9 @@ import os
 
 #### CONFIG ####
 NUM_PEOPLE = 4 # The maximum number of people that can be detected
-DETECTION_MIN = 0.5 # The minimum confidence score for the pose/hand detection to be considered successful
-PRESENCE_MIN = 0.5 # The minimum confidence score of pose/hand presence score in the pose landmark detection.
-TRACKING_MIN = 0.5 # The minimum confidence score for the pose/hand tracking to be considered successful.
+DETECTION_MIN = 0.25 # The minimum confidence score for the pose/hand detection to be considered successful
+PRESENCE_MIN = 0.25 # The minimum confidence score of pose/hand presence score in the pose landmark detection.
+TRACKING_MIN = 0.25 # The minimum confidence score for the pose/hand tracking to be considered successful.
 CAM_NUMBER = 1 # The camera to use, usually 0 (default) or 1 (external)
 TARGET_WIDTH = 1920 # Target output resolution
 TARGET_HEIGHT = 1080 # Target output resolution
